@@ -1,19 +1,35 @@
 # Getting rid of Nulls
 
 SELECT 
-  date, store_name, address, city, category_name, vendor_name, 
-  item_description, state_bottle_cost, state_bottle_retail, 
+  date, store_name, address, city, county, category_name, vendor_name, 
+  item_description, pack, bottle_volume_ml, state_bottle_cost, state_bottle_retail, 
   bottles_sold, sale_dollars, volume_sold_liters
 FROM `bigquery-public-data.iowa_liquor_sales.sales` 
 WHERE date is not NULL 
 OR store_name is not NULL 
+OR address is not NULL
 OR city is not NULL
+OR county is not NULL
 OR category_name is not NULL
 OR vendor_name is not NULL
 OR item_description is not NULL
+OR pack is not NULL
+OR bottle_volume_ml is not NULL
+OR state_bottle_cost is not NULL
+OR state_bottle_retail is not NULL 
+OR bottles_sold is not NULL
 OR sale_dollars is not NULL
 OR volume_sold_liters is not NULL
 ORDER BY date
+
+-- Data Types
+
+SELECT
+  CAST(store_number AS INTEGER) AS store_num,
+  CAST(county_number AS INTEGER) AS county_num,
+  CAST(vendor_number AS INTEGER) AS vendor_num,
+  CAST(item_number AS INTEGER) AS item_num
+FROM `bigquery-public-data.iowa_liquor_sales.sales` 
 
 # Top 25 liqour stores by volume
 
