@@ -1,0 +1,177 @@
+# Bellabeat Fitness Case Study
+
+{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Install packages
+
+install.packages("tidyverse")
+install.packages("janitor")
+install.packages("here")
+install.packages("skimr")
+install.packages("dplyr")
+install.packages("ggplot2")
+
+
+### Load packages
+
+library(tidyverse)
+library(janitor)
+library(here)
+library(skimr)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+
+### Preview data
+
+head(activity)
+head(calories)
+head(heartrate)
+head(Intensities)
+head(sleep)
+head(weight)
+
+## Clean Data
+
+### Variable types
+
+class(activity$ActivityDate)
+
+### Convert character to date format
+
+### Intensity
+Intensities$ActivityHour=as.POSIXct(Intensities$ActivityHour, format="%m/%d/%Y %I:%M:%S %p", tz=Sys.timezone())
+Intensities$time <- format(Intensities$ActivityHour, format = "%H:%M:%S")
+Intensities$date <- format(Intensities$ActivityHour, format = "%m/%d/%y")
+### calories
+hourlyCalories_merged$ActivityHour=as.POSIXct(hourlyCalories_merged$ActivityHour, format="%m/%d/%Y %I:%M:%S %p", tz=Sys.timezone())
+hourlyCalories_merged$time <- format(hourlyCalories_merged$ActivityHour, format = "%H:%M:%S")
+hourlyCalories_merged$date <- format(hourlyCalories_merged$ActivityHour, format = "%m/%d/%y")
+### activity
+d_activity$ActivityDate=as.POSIXct(d_activity$ActivityDate, format="%m/%d/%Y", tz=Sys.timezone())
+d_activity$date <- format(d_activity$ActivityDate, format = "%m/%d/%y")
+### sleep
+sleep$SleepDay=as.POSIXct(sleep$SleepDay, format="%m/%d/%Y %I:%M:%S %p", tz=Sys.timezone())
+sleep$date <- format(sleep$SleepDay, format = "%m/%d/%y")
+
+
+### verify correct data type
+
+class(activity$ActivityDate)
+class(activity$TotalSteps)
+class(calories$ActivityHour)
+class(heartrate$Time)
+class(Intensities$ActivityHour)
+class(sleep$SleepDay)
+class(weight$Date)
+class(dailyActivity_merged$ActivityDate)
+
+### rename dataset
+
+d_activity <- dailyActivity_merged
+
+### summarizing data
+
+n_distinct(d_activity$Id)
+n_distinct(calories$Id)
+n_distinct(Intensities$Id)
+n_distinct(sleep$Id)
+n_distinct(weight$Id)
+n_distinct(heartrate$Id)
+
+### activity
+d_activity %>%  
+  select(TotalSteps,
+         TotalDistance,
+         SedentaryMinutes, Calories) %>%
+  summary()
+
+### explore num of active minutes per category
+d_activity %>%
+  select(VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes) %>%
+  summary()
+
+### calories
+calories %>%
+  select(Calories) %>%
+  summary()
+### sleep
+sleep %>%
+  select(TotalSleepRecords, TotalMinutesAsleep, TotalTimeInBed) %>%
+  summary()
+### weight
+weight %>%
+  select(WeightKg, BMI) %>%
+  summary()
+### heart rate
+heartrate %>% 
+  select(Value) %>% 
+  summary()
+
+## Merging tables
+
+sleep_sedentary <- inner_join(sleep, sedentary_df, by ="Id")
+view(sleep_sedentary)
+
+## Visuals
+
+### How does activity intensity affect the loss of calories? - high activity leads to more burning of calories than low activity
+
+ggplot(data=d_activity, aes(x=LightlyActiveMinutes, y=Calories)) + 
+  geom_point() + geom_smooth() + labs(title="Light Activity vs Calories")
+
+
+ggplot(data=d_activity, aes(x=VeryActiveMinutes, y=Calories)) + 
+  geom_point() + geom_smooth() + labs(title="High Activity vs Calories")
+
+### Average total calories Vs time of the day - People are most active beteween 5-7 (After work)
+
+calories_new <- hourlyCalories_merged %>%
+  group_by(time) %>%
+  drop_na() %>%
+  summarise(mean_total_calories = mean(Calories))
+
+ggplot(data=calories_new, aes(x=time, y=mean_total_calories)) + geom_histogram(stat = "identity", fill='darkgreen') +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title="Average Total Calories vs. Time")
+
+### Sleep Vs Sedentary - people are most sedentary when they sleep < 200 minutes or > 600 minutes *(data may be insufficient). 
+Sedentary minutes cna be correlated lack of proper rest to be active throughout the day which is often a result of under or overseleeping. 
+
+sleep_sed_2 <- sleep_sedentary %>% 
+group_by(TotalMinutesAsleep) %>%
+  drop_na() %>%
+  summarise(mean_sedentary = mean(SedentaryMinutes))
+
+ggplot(data=sleep_sed_2, aes(x=TotalMinutesAsleep, y=mean_sedentary)) + 
+  geom_point() + geom_smooth() + labs(title="sedentary vs sleep")
+
+### Are the moajority of steps being taken by lighly or very active participants? 
+
+ggplot(data=d_activity, aes(x=VeryActiveMinutes, y=TotalSteps)) + 
+  geom_point() + geom_smooth() + labs(title="Very Active Minutes vs Total Steps")
+
+
+ggplot(data=d_activity, aes(x=LightlyActiveMinutes, y=TotalSteps)) + 
+  geom_point() + geom_smooth() + labs(title="Lightly Minutes vs Total Steps")
+
+### highly active distance people burn more calories. many appear to be runners as they take many more steps in less than half the time. 
+### Most participants are lightly active and most likely dont like running. the lightly active VS very active comparisons showed that
+### very active participants burn more calories. 
+
+Conclusions:
+1.suggest highly active fun excersizes like dancing and swimming to get clients
+to be more highly active without having to run and burn calories in half the time. (Not to mention these are year round options)
+2. For those ot willing to be more active, prgram app to send notifications to cleints that arent logging many active munutes
+(and are falling below recommended daily step range) that remind clients to stand up every 20-30 minutes to an hour (they can choose)
+in oder to redice sedentary time,and get some extra steps in, light activity in between sedentary moments at work. Just doing this 
+can make them feel better over time and can be the gateway to more active excersixes in the future. 
+3. Emhasize the importance of proper rest. Clients who get sufficient rest are spending less time sedentary. Automate the calculation of calories 
+a client bruns sitting down sitting vs engaging in light, moderae or hight activity so they can see the a quantifiable difference oft their choices. 
+we can take it a step further and show them how many calories theyll burn in a 1-3-9 -12 month span if they continue to be active in the same way and 
+how much weight they can lose if they do that Vs how muany calories theyll keep and weight theyll gain or keep over a 1-3-6-9-12 month sspan if they choose 
+to be sedentary and inactivity. 
+
