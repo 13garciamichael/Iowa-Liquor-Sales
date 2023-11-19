@@ -1,0 +1,99 @@
+# Getting rid of Nulls
+
+SELECT 
+  date, store_name, address, city, category_name, vendor_name, 
+  item_description, state_bottle_cost, state_bottle_retail, 
+  bottles_sold, sale_dollars, volume_sold_liters
+FROM `bigquery-public-data.iowa_liquor_sales.sales` 
+WHERE date is not NULL 
+OR store_name is not NULL 
+OR city is not NULL
+OR category_name is not NULL
+OR vendor_name is not NULL
+OR item_description is not NULL
+OR sale_dollars is not NULL
+OR volume_sold_liters is not NULL
+ORDER BY date
+
+# Top 25 liqour stores by volume
+
+SELECT 
+  DISTINCT(store_name),
+  sum(volume_sold_liters) AS vol_sold
+FROM `bigquery-public-data.iowa_liquor_sales.sales` 
+WHERE 
+  date > "2022-08-30" AND item_description is not NULL
+GROUP BY 
+  store_name
+ORDER BY 
+  vol_sold DESC
+LIMIT 25
+
+# Bottom 25 liquor stores by volume 
+
+SELECT 
+  DISTINCT(store_name),
+  sum(volume_sold_liters) AS vol_sold
+FROM `bigquery-public-data.iowa_liquor_sales.sales` 
+WHERE 
+  date > "2022-08-30" AND item_description is not NULL
+  and sale_dollars < 0
+GROUP BY 
+  store_name
+ORDER BY 
+  vol_sold 
+LIMIT 25
+
+# Most volume sold by top 25 items 
+SELECT 
+  DISTINCT(item_description),
+  sum(volume_sold_liters) AS vol_sold
+FROM `bigquery-public-data.iowa_liquor_sales.sales` 
+WHERE 
+  date > "2022-08-30" AND date <= "2023-08-30"
+  AND date is not NULL
+GROUP BY 
+  item_description
+ORDER BY 
+  vol_sold DESC
+LIMIT 25 
+
+# Most volume sold by top 25 city
+
+SELECT 
+  DISTINCT(city),
+  sum(volume_sold_liters) AS vol_sold
+FROM `bigquery-public-data.iowa_liquor_sales.sales` 
+WHERE 
+  date > "2022-08-30" AND date <= "2023-08-30"
+  AND date is not NULL
+GROUP BY 
+  city
+ORDER BY 
+  vol_sold DESC
+LIMIT 25
+
+# Liters sold by season
+
+SELECT
+  sum(volume_sold_liters) AS liters_sold,
+  CASE
+   WHEN date > "2022-08-30" AND date <= "2022-11-30"
+   THEN "FALL"
+   WHEN date > "2022-11-30" AND date <= "2023-02-28" 
+   THEN "WINTER"
+   WHEN date > "2023-02-28" AND date <= "2023-05-31"
+   THEN "SPRING"
+   WHEN date > "2023-05-31" AND date <= "2023-08-31"
+   THEN "SUMMER"
+   END
+   AS season
+ FROM
+  `bigquery-public-data.iowa_liquor_sales.sales`   
+WHERE
+  date > "2022-08-30" AND date <= "2023-08-30"
+  AND date is not NULL
+GROUP BY 
+  date, season
+ORDER BY 
+  liters_sold DESC
