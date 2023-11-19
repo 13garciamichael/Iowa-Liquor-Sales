@@ -1,2 +1,2 @@
-# Iowa-Liquor-Sales
-Data analysis of Iowa liquor sales over the past year in SQL server
+# Coding
+Data Analysis projects done in R and SQL
